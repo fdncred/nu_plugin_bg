@@ -73,7 +73,6 @@ pub fn launch_bg_process(
             // Start the task as a background child process with arguments
             let _ = std::process::Command::new(&cmd_name.item)
                 .args(&cmd_args)
-                #[cfg(unix)]
                 .process_group(0)
                 .spawn()
                 .map_err(|err| LabeledError {
@@ -90,7 +89,6 @@ pub fn launch_bg_process(
             }
             // Start the task as a background child process without arguments
             let _ = std::process::Command::new(&cmd_name.item)
-                #[cfg(unix)]
                 .process_group(0)
                 .spawn()
                 .map_err(|err| LabeledError {
