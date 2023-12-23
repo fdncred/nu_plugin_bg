@@ -71,31 +71,31 @@ pub fn launch_bg_process(
                 );
             }
             // Start the task as a background child process with arguments
-            let _ = std::process::Command::new(&cmd_name.item)
-                .args(&cmd_args)
-                .process_group(0)
-                .spawn()
-                .map_err(|err| LabeledError {
-                    label: "Could not start process".into(),
-                    msg: format!(
-                        "Could not start process name: '{}' with args {:?} {}",
-                        cmd_name.item, cmd_args, err
-                    ),
-                    span: Some(cmd_name.span),
-                })?;
+            let mut p = std::process::Command::new(&cmd_name.item);
+            p.args(&cmd_args);
+            #[cfg(unix)]
+            p.process_group(0);
+            p.spawn().map_err(|err| LabeledError {
+                label: "Could not start process".into(),
+                msg: format!(
+                    "Could not start process name: '{}' with args {:?} {}",
+                    cmd_name.item, cmd_args, err
+                ),
+                span: Some(cmd_name.span),
+            })?;
         } else {
             if debug {
                 eprintln!("Starting process: '{}', no arguments", cmd_name.item);
             }
             // Start the task as a background child process without arguments
-            let _ = std::process::Command::new(&cmd_name.item)
-                .process_group(0)
-                .spawn()
-                .map_err(|err| LabeledError {
-                    label: "Could not start process".into(),
-                    msg: format!("Could not start process name: '{}', {}", cmd_name.item, err),
-                    span: Some(cmd_name.span),
-                })?;
+            let mut p = std::process::Command::new(&cmd_name.item);
+            #[cfg(unix)]
+            p.process_group(0);
+            p.spawn().map_err(|err| LabeledError {
+                label: "Could not start process".into(),
+                msg: format!("Could not start process name: '{}', {}", cmd_name.item, err),
+                span: Some(cmd_name.span),
+            })?;
         }
     } else {
         return Err(LabeledError {
