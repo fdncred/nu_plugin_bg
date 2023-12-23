@@ -1,6 +1,8 @@
 use nu_plugin::{serve_plugin, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin};
 use nu_protocol::{Category, PluginExample, PluginSignature, Span, Spanned, SyntaxShape, Value};
 
+use std::os::unix::process::CommandExt;
+
 struct Implementation;
 
 impl Implementation {
@@ -71,6 +73,7 @@ pub fn launch_bg_process(
             // Start the task as a background child process with arguments
             let _ = std::process::Command::new(&cmd_name.item)
                 .args(&cmd_args)
+                .process_group(0)
                 .spawn()
                 .map_err(|err| LabeledError {
                     label: "Could not start process".into(),
@@ -86,6 +89,7 @@ pub fn launch_bg_process(
             }
             // Start the task as a background child process without arguments
             let _ = std::process::Command::new(&cmd_name.item)
+                .process_group(0)
                 .spawn()
                 .map_err(|err| LabeledError {
                     label: "Could not start process".into(),
