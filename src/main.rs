@@ -27,6 +27,7 @@ impl Plugin for Implementation {
                 Some('a'),
             )
             .switch("debug", "Debug mode", Some('d'))
+            .switch("pid", "Return process ID", Some('p'))
             .category(Category::Experimental)
             .plugin_examples(vec![PluginExample {
                 description: "Start a command in the background".into(),
@@ -45,10 +46,9 @@ impl Plugin for Implementation {
         let cmd: Spanned<String> = call.req(0)?;
         let rest: Option<Vec<String>> = call.get_flag("arguments")?;
         let debug: bool = call.has_flag("debug");
+        let pid: bool = call.has_flag("pid");
 
-        let ret_val = launch_bg_process(cmd, rest, debug, call.head);
-
-        ret_val
+        launch_bg_process(cmd, rest, debug, pid, call.head)
     }
 }
 
@@ -60,7 +60,8 @@ pub fn launch_bg_process(
     cmd_name: Spanned<String>,
     args: Option<Vec<String>>,
     debug: bool,
-    _value_span: Span,
+    pid: bool,
+    value_span: Span,
 ) -> Result<Value, LabeledError> {
     let debug_name = if let Some(ref cmd_args) = args {
         format!("'{}' with args {:?}", cmd_name.item, cmd_args)
@@ -85,5 +86,12 @@ pub fn launch_bg_process(
         span: Some(cmd_name.span),
     })?;
 
-    Ok(Value::Int { val: process.id() as i64, internal_span: Span::unknown()})
+    if pid {
+        Ok(Value::Int {
+            val: process.id() as i64,
+            internal_span: value_span,
+        })
+    } else {
+        Ok(Value::nothing(value_span))
+    }
 }
