@@ -42,7 +42,7 @@ impl Plugin for Implementation {
         _input: &Value,
     ) -> Result<Value, LabeledError> {
         assert_eq!(name, "bg");
-        let cmd: Option<Spanned<String>> = call.opt(0)?;
+        let cmd: Spanned<String> = call.req(0)?;
         let rest: Option<Vec<String>> = call.get_flag("arguments")?;
         let debug: bool = call.has_flag("debug");
 
@@ -57,53 +57,33 @@ fn main() {
 }
 
 pub fn launch_bg_process(
-    cmd: Option<Spanned<String>>,
+    cmd_name: Spanned<String>,
     args: Option<Vec<String>>,
     debug: bool,
-    value_span: Span,
+    _value_span: Span,
 ) -> Result<Value, LabeledError> {
-    if let Some(cmd_name) = cmd {
-        if let Some(cmd_args) = args {
-            if debug {
-                eprintln!(
-                    "Starting process: '{}' with args '{:?}'",
-                    cmd_name.item, cmd_args
-                );
-            }
-            // Start the task as a background child process with arguments
-            let mut p = std::process::Command::new(&cmd_name.item);
-            p.args(&cmd_args);
-            #[cfg(unix)]
-            p.process_group(0);
-            p.spawn().map_err(|err| LabeledError {
-                label: "Could not start process".into(),
-                msg: format!(
-                    "Could not start process name: '{}' with args {:?} {}",
-                    cmd_name.item, cmd_args, err
-                ),
-                span: Some(cmd_name.span),
-            })?;
-        } else {
-            if debug {
-                eprintln!("Starting process: '{}', no arguments", cmd_name.item);
-            }
-            // Start the task as a background child process without arguments
-            let mut p = std::process::Command::new(&cmd_name.item);
-            #[cfg(unix)]
-            p.process_group(0);
-            p.spawn().map_err(|err| LabeledError {
-                label: "Could not start process".into(),
-                msg: format!("Could not start process name: '{}', {}", cmd_name.item, err),
-                span: Some(cmd_name.span),
-            })?;
-        }
+    let debug_name = if let Some(ref cmd_args) = args {
+        format!("'{}' with args {:?}", cmd_name.item, cmd_args)
     } else {
-        return Err(LabeledError {
-            label: "No command provided".into(),
-            msg: "No command provided".into(),
-            span: Some(value_span),
-        });
+        format!("'{}'", cmd_name.item)
+    };
+
+    if debug {
+        eprintln!("Starting process {debug_name}");
     }
+
+    let mut p = std::process::Command::new(&cmd_name.item);
+    if let Some(cmd_args) = args {
+        p.args(cmd_args);
+    }
+    #[cfg(unix)]
+    p.process_group(0);
+
+    p.spawn().map_err(|err| LabeledError {
+        label: "Could not start process".into(),
+        msg: format!("Could not start process {debug_name}: {err}",),
+        span: Some(cmd_name.span),
+    })?;
 
     Ok(Value::test_nothing())
 }
