@@ -79,11 +79,11 @@ pub fn launch_bg_process(
     #[cfg(unix)]
     p.process_group(0);
 
-    p.spawn().map_err(|err| LabeledError {
+    let process = p.spawn().map_err(|err| LabeledError {
         label: "Could not start process".into(),
         msg: format!("Could not start process {debug_name}: {err}",),
         span: Some(cmd_name.span),
     })?;
 
-    Ok(Value::test_nothing())
+    Ok(Value::Int { val: process.id() as i64, internal_span: Span::unknown()})
 }
