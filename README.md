@@ -22,7 +22,7 @@ Parameters:
 
 Examples:
   Start a command in the background
-  > some_command --arguments [arg1 --arg2 3]
+  > bg some_command --arguments [arg1 --arg2 3]
 ```
 
 ## Known Issues
