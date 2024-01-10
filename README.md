@@ -15,6 +15,7 @@ Flags:
   -h, --help - Display the help message for this command
   -a, --arguments <List(String)> - The arguments of the command.
   -d, --debug - Debug mode
+  -p, --pid - Return process ID
 
 Parameters:
   command <string>: The command to start in the background.
