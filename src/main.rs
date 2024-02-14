@@ -46,8 +46,8 @@ impl Plugin for Implementation {
         assert_eq!(name, "bg");
         let cmd: Spanned<String> = call.req(0)?;
         let rest: Option<Vec<String>> = call.get_flag("arguments")?;
-        let debug: bool = call.has_flag("debug");
-        let pid: bool = call.has_flag("pid");
+        let debug: bool = call.has_flag("debug")?;
+        let pid: bool = call.has_flag("pid")?;
 
         launch_bg_process(cmd, rest, debug, pid, call.head)
     }
