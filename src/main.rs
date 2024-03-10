@@ -1,4 +1,6 @@
-use nu_plugin::{serve_plugin, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin};
+use nu_plugin::{
+    serve_plugin, EngineInterface, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin,
+};
 use nu_protocol::{Category, PluginExample, PluginSignature, Span, Spanned, SyntaxShape, Value};
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -37,9 +39,9 @@ impl Plugin for Implementation {
     }
 
     fn run(
-        &mut self,
+        &self,
         name: &str,
-        _config: &Option<Value>,
+        _engine: &EngineInterface,
         call: &EvaluatedCall,
         _input: &Value,
     ) -> Result<Value, LabeledError> {
