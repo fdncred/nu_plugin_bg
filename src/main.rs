@@ -1,21 +1,26 @@
 use nu_plugin::{
     serve_plugin, EngineInterface, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin,
+    PluginCommand, SimplePluginCommand,
 };
 use nu_protocol::{Category, PluginExample, PluginSignature, Span, Spanned, SyntaxShape, Value};
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 
-struct Implementation;
+struct BgPlugin;
 
-impl Implementation {
-    fn new() -> Self {
-        Self {}
+impl Plugin for BgPlugin {
+    fn commands(&self) -> Vec<Box<dyn PluginCommand<Plugin = Self>>> {
+        vec![Box::new(Implementation)]
     }
 }
 
-impl Plugin for Implementation {
-    fn signature(&self) -> Vec<PluginSignature> {
-        vec![PluginSignature::build("bg")
+struct Implementation;
+
+impl SimplePluginCommand for Implementation {
+    type Plugin = BgPlugin;
+
+    fn signature(&self) -> PluginSignature {
+        PluginSignature::build("bg")
             .usage("Start a process in the background.")
             .required(
                 "command",
@@ -35,17 +40,16 @@ impl Plugin for Implementation {
                 description: "Start a command in the background".into(),
                 example: "some_command --arguments [arg1 --arg2 3]".into(),
                 result: None,
-            }])]
+            }])
     }
 
     fn run(
         &self,
-        name: &str,
+        _plugin: &BgPlugin,
         _engine: &EngineInterface,
         call: &EvaluatedCall,
         _input: &Value,
     ) -> Result<Value, LabeledError> {
-        assert_eq!(name, "bg");
         let cmd: Spanned<String> = call.req(0)?;
         let rest: Option<Vec<String>> = call.get_flag("arguments")?;
         let debug: bool = call.has_flag("debug")?;
@@ -56,7 +60,7 @@ impl Plugin for Implementation {
 }
 
 fn main() {
-    serve_plugin(&mut Implementation::new(), MsgPackSerializer);
+    serve_plugin(&BgPlugin, MsgPackSerializer);
 }
 
 pub fn launch_bg_process(
