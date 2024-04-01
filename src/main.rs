@@ -1,8 +1,8 @@
 use nu_plugin::{
-    serve_plugin, EngineInterface, EvaluatedCall, LabeledError, MsgPackSerializer, Plugin,
-    PluginCommand, SimplePluginCommand,
+    serve_plugin, EngineInterface, EvaluatedCall, MsgPackSerializer, Plugin, PluginCommand,
+    SimplePluginCommand,
 };
-use nu_protocol::{Category, PluginExample, PluginSignature, Span, Spanned, SyntaxShape, Value};
+use nu_protocol::{Category, Example, LabeledError, Signature, Span, Spanned, SyntaxShape, Value};
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 
@@ -19,9 +19,16 @@ struct Implementation;
 impl SimplePluginCommand for Implementation {
     type Plugin = BgPlugin;
 
-    fn signature(&self) -> PluginSignature {
-        PluginSignature::build("bg")
-            .usage("Start a process in the background.")
+    fn name(&self) -> &str {
+        "bg"
+    }
+
+    fn usage(&self) -> &str {
+        "Start a process in the background."
+    }
+
+    fn signature(&self) -> Signature {
+        Signature::build(PluginCommand::name(self))
             .required(
                 "command",
                 SyntaxShape::String,
@@ -36,11 +43,14 @@ impl SimplePluginCommand for Implementation {
             .switch("debug", "Debug mode", Some('d'))
             .switch("pid", "Return process ID", Some('p'))
             .category(Category::Experimental)
-            .plugin_examples(vec![PluginExample {
-                description: "Start a command in the background".into(),
-                example: "some_command --arguments [arg1 --arg2 3]".into(),
-                result: None,
-            }])
+    }
+
+    fn examples(&self) -> Vec<Example> {
+        vec![Example {
+            description: "Start a command in the background".into(),
+            example: "some_command --arguments [arg1 --arg2 3]".into(),
+            result: None,
+        }]
     }
 
     fn run(
@@ -87,10 +97,9 @@ pub fn launch_bg_process(
     #[cfg(unix)]
     p.process_group(0);
 
-    let process = p.spawn().map_err(|err| LabeledError {
-        label: "Could not start process".into(),
-        msg: format!("Could not start process {debug_name}: {err}",),
-        span: Some(cmd_name.span),
+    let process = p.spawn().map_err(|err| {
+        LabeledError::new(format!("Could not start process {debug_name}: {err}"))
+            .with_label("Could not start process", cmd_name.span)
     })?;
 
     if pid {
