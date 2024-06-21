@@ -9,6 +9,10 @@ use std::os::unix::process::CommandExt;
 struct BgPlugin;
 
 impl Plugin for BgPlugin {
+    fn version(&self) -> String {
+        env!("CARGO_PKG_VERSION").into()
+    }
+
     fn commands(&self) -> Vec<Box<dyn PluginCommand<Plugin = Self>>> {
         vec![Box::new(Implementation)]
     }
